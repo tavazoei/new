@@ -12,12 +12,12 @@ from app.main import app
 
 load_dotenv()
 
-TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
+DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 
-assert TEST_DATABASE_URL is not None
+assert DATABASE_URL is not None
 
 
-test_engine = create_engine(TEST_DATABASE_URL)
+test_engine = create_engine(DATABASE_URL)
 
 TestingSessionLocal = sessionmaker(
     bind=test_engine,
