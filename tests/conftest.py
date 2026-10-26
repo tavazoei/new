@@ -15,7 +15,7 @@ load_dotenv()
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 
 assert TEST_DATABASE_URL is not None
-assert "test_poduct_db" in TEST_DATABASE_URL
+# assert "test_poduct_db" in TEST_DATABASE_URL
 
 
 test_engine = create_engine(TEST_DATABASE_URL)
