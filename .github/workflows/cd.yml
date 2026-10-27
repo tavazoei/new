@@ -2,7 +2,7 @@ name: CD
 
 on:
   workflow_run:
-    workflows: ["Testi"]
+    workflows: ["Tests"]
     types:
       - completed
 
@@ -16,9 +16,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Show project files
+      - name: Install dependencies
+        shell: powershell
         run: |
-          echo "Deployment machine:"
-          hostname
-          echo "Project files:"
-          dir
+          python -m pip install -r requirements.txt
+
+      - name: Stop old FastAPI
+        shell: powershell
+        run: |
+          $connection = Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue
+
+          if ($connection) {
+              Write-Host "Stopping old FastAPI..."
+              Stop-Process -Id $connection.OwningProcess -Force
+          }
+          else {
+              Write-Host "FastAPI is not running."
+          }
+
+      - name: Start new FastAPI
+        shell: powershell
+        run: |
+          Start-Process python `
+            -ArgumentList "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000"
+
+          Write-Host "FastAPI started."
