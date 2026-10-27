@@ -21,7 +21,7 @@ jobs:
       - name: Update deployment folder
         shell: powershell
         run: |
-          cd C:\Users\Mehrdad\Desktop\FASTAPI-DEPLOY
+          cd C:\Users\Mehrdad\Desktop\new
 
           git fetch origin
           git reset --hard origin/main
