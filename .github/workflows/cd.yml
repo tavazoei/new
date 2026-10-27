@@ -13,31 +13,82 @@ jobs:
     runs-on: self-hosted
 
     steps:
+      # 1. دریافت کد
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 2. بروزرسانی پوشه Deploy
+      - name: Update deployment folder
+        shell: powershell
+        run: |
+          cd C:\Users\Mehrdad\Desktop\FASTAPI-DEPLOY
+
+          git fetch origin
+          git reset --hard origin/main
+
+      # 3. ساخت Virtual Environment در صورت نیاز
+      - name: Create virtual environment
+        shell: powershell
+        run: |
+          cd C:\Users\Mehrdad\Desktop\new
+
+          if (-not (Test-Path ".venv")) {
+              python -m venv .venv
+          }
+
+      # 4. نصب Dependencies
       - name: Install dependencies
         shell: powershell
         run: |
-          python -m pip install -r requirements.txt
+          cd C:\Users\Mehrdad\Desktop\new
 
+          .\.venv\Scripts\python.exe -m pip install --upgrade pip
+          .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+
+      # 5. خاموش کردن FastAPI قبلی
       - name: Stop old FastAPI
         shell: powershell
         run: |
-          $connection = Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue
+          $connection = Get-NetTCPConnection `
+            -LocalPort 8000 `
+            -State Listen `
+            -ErrorAction SilentlyContinue
 
           if ($connection) {
               Write-Host "Stopping old FastAPI..."
-              Stop-Process -Id $connection.OwningProcess -Force
+
+              Stop-Process `
+                -Id $connection.OwningProcess `
+                -Force
           }
           else {
-              Write-Host "FastAPI is not running."
+              Write-Host "No FastAPI is currently running."
           }
 
-      - name: Start new FastAPI
+      # 6. اجرای FastAPI جدید
+      - name: Start FastAPI
         shell: powershell
         run: |
-          Start-Process python `
-            -ArgumentList "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000"
+          $deployPath = "C:\Users\Mehrdad\Desktop\new"
 
-          Write-Host "FastAPI started."
+          Start-Process `
+            -FilePath "$deployPath\.venv\Scripts\python.exe" `
+            -WorkingDirectory $deployPath `
+            -ArgumentList "-m","uvicorn","app.main:app","--host","127.0.0.1","--port","8000"
+
+      # 7. بررسی سلامت برنامه
+      - name: Health check
+        shell: powershell
+        run: |
+          Start-Sleep -Seconds 5
+
+          $response = Invoke-WebRequest `
+            -Uri "http://127.0.0.1:8000/docs" `
+            -UseBasicParsing
+
+          if ($response.StatusCode -eq 200) {
+              Write-Host "FastAPI is running successfully!"
+          }
+          else {
+              throw "FastAPI health check failed."
+          }
