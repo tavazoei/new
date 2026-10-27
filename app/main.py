@@ -10,7 +10,7 @@ app = FastAPI()
 
 @app.get("/")
 def root():
-    return {"message": "Product API is running changed"}
+    return {"message": "Product API is running changedfff"}
 
 
 @app.post("/products", response_model=ProductResponse)
