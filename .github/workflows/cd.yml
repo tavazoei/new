@@ -41,19 +41,19 @@ jobs:
       - name: Build Docker image
         shell: powershell
         run: |
-          docker build -t github-actions-docker-test:1.0 .
+          & "C:\Users\Mehrdad\AppData\Local\Programs\DockerDesktop\resources\bin\docker.exe"  build -t github-actions-docker-test:1.0 .
 
       # 5. نمایش Image
       - name: Show Docker image
         shell: powershell
         run: |
-          docker images github-actions-docker-test
+          & "C:\Users\Mehrdad\AppData\Local\Programs\DockerDesktop\resources\bin\docker.exe"  images github-actions-docker-test
 
       # 6. اجرای Container
       - name: Run Docker container
         shell: powershell
         run: |
-          docker run -d `
+          & "C:\Users\Mehrdad\AppData\Local\Programs\DockerDesktop\resources\bin\docker.exe"  run -d `
             --name github-actions-docker-test `
             github-actions-docker-test:1.0
 
@@ -61,21 +61,21 @@ jobs:
       - name: Check container
         shell: powershell
         run: |
-          docker ps
-          docker logs github-actions-docker-test
+          & "C:\Users\Mehrdad\AppData\Local\Programs\DockerDesktop\resources\bin\docker.exe"  ps
+          & "C:\Users\Mehrdad\AppData\Local\Programs\DockerDesktop\resources\bin\docker.exe"  logs github-actions-docker-test
 
       # 8. تست Container
       - name: Test container
         shell: powershell
         run: |
-          docker exec github-actions-docker-test echo "Docker container works!"
+          & "C:\Users\Mehrdad\AppData\Local\Programs\DockerDesktop\resources\bin\docker.exe"  exec github-actions-docker-test echo "Docker container works!"
 
       # 9. حذف Container
       - name: Remove test container
         if: always()
         shell: powershell
         run: |
-          docker rm -f github-actions-docker-test
+          & "C:\Users\Mehrdad\AppData\Local\Programs\DockerDesktop\resources\bin\docker.exe"  rm -f github-actions-docker-test
 
       # 10. پایان
       - name: Docker test completed
