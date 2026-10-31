@@ -1,104 +1,15 @@
-name: CD
+name: Docker Test
 
 on:
-  workflow_run:
-    workflows: ["Testi"]
-    types:
-      - completed
+  workflow_dispatch:
 
 jobs:
-  deploy:
-    # فقط اگر CI با موفقیت تمام شده باشد
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-
+  test:
     runs-on: self-hosted
 
     steps:
-      # ----------------------------------------
-      # 1. بروزرسانی کد Production
-      # ----------------------------------------
-      - name: Update deployment folder
+      - name: Check Docker
         shell: powershell
         run: |
-
-          cd C:\Users\Mehrdad\Desktop\new
-
-          git fetch origin
-
-          git reset --hard origin/main
-
-      # ----------------------------------------
-      # 2. نمایش Commit
-      # ----------------------------------------
-      - name: Show deployed commit
-        shell: powershell
-        run: |
-
-          cd C:\Users\Mehrdad\Desktop\new
-
-          Write-Host "Deploying commit:"
-          git rev-parse --short HEAD
-
-      # ----------------------------------------
-      # 3. ساخت Docker Image
-      # ----------------------------------------
-      - name: Build Docker image
-        shell: powershell
-        run: |
-
-          cd C:\Users\Mehrdad\Desktop\new
-
-          docker build -t shop-api:1.0 .
-
-      # ----------------------------------------
-      # 4. توقف Container قبلی
-      # ----------------------------------------
-      - name: Stop old container
-        shell: powershell
-        run: |
-
-          docker stop shop
-
-          if ($LASTEXITCODE -ne 0) {
-              Write-Host "Container is not running."
-              exit 0
-          }
-
-      # ----------------------------------------
-      # 5. حذف Container قبلی
-      # ----------------------------------------
-      - name: Remove old container
-        shell: powershell
-        run: |
-
-          docker rm shop
-
-          if ($LASTEXITCODE -ne 0) {
-              Write-Host "Container does not exist."
-              exit 0
-          }
-
-      # ----------------------------------------
-      # 6. اجرای Container جدید
-      # ----------------------------------------
-      - name: Run new container
-        shell: powershell
-        run: |
-
-          docker run -d `
-            --name shop `
-            -p 8000:8000 `
-            shop-api:1.0
-
-      # ----------------------------------------
-      # 7. بررسی
-      # ----------------------------------------
-      - name: Verify deployment
-        shell: powershell
-        run: |
-
-          Start-Sleep -Seconds 5
-
+          docker --version
           docker ps
-
-          docker logs shop
