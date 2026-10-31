@@ -1,51 +1,47 @@
 name: CD
 
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["Testi"]
+    types:
+      - completed
 
 jobs:
   deploy:
-    # این Job روی کامپیوتر خودت اجرا می‌شود
+    # فقط اگر CI با موفقیت تمام شده باشد
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
     runs-on: self-hosted
 
     steps:
-      # --------------------------------------------------
-      # 1. دریافت/بروزرسانی کد
-      # --------------------------------------------------
+      # ----------------------------------------
+      # 1. بروزرسانی کد Production
+      # ----------------------------------------
       - name: Update deployment folder
         shell: powershell
         run: |
 
-          # رفتن به پوشه‌ای که Production از آن Deploy می‌شود
           cd C:\Users\Mehrdad\Desktop\new
 
-          # دریافت آخرین اطلاعات از GitHub
           git fetch origin
 
-          # قرار دادن پوشه دقیقاً روی آخرین commit شاخه main
           git reset --hard origin/main
 
-      # --------------------------------------------------
-      # 2. نمایش اطلاعات برای Debug
-      # --------------------------------------------------
-      - name: Show deployment information
+      # ----------------------------------------
+      # 2. نمایش Commit
+      # ----------------------------------------
+      - name: Show deployed commit
         shell: powershell
         run: |
 
-          Write-Host "Machine:"
-          hostname
+          cd C:\Users\Mehrdad\Desktop\new
 
-          Write-Host "Current directory:"
-          Get-Location
-
-          Write-Host "Git commit:"
+          Write-Host "Deploying commit:"
           git rev-parse --short HEAD
 
-      # --------------------------------------------------
+      # ----------------------------------------
       # 3. ساخت Docker Image
-      # --------------------------------------------------
+      # ----------------------------------------
       - name: Build Docker image
         shell: powershell
         run: |
@@ -54,9 +50,9 @@ jobs:
 
           docker build -t shop-api:1.0 .
 
-      # --------------------------------------------------
+      # ----------------------------------------
       # 4. توقف Container قبلی
-      # --------------------------------------------------
+      # ----------------------------------------
       - name: Stop old container
         shell: powershell
         run: |
@@ -64,13 +60,13 @@ jobs:
           docker stop shop
 
           if ($LASTEXITCODE -ne 0) {
-              Write-Host "Container shop is not running."
+              Write-Host "Container is not running."
               exit 0
           }
 
-      # --------------------------------------------------
+      # ----------------------------------------
       # 5. حذف Container قبلی
-      # --------------------------------------------------
+      # ----------------------------------------
       - name: Remove old container
         shell: powershell
         run: |
@@ -78,13 +74,13 @@ jobs:
           docker rm shop
 
           if ($LASTEXITCODE -ne 0) {
-              Write-Host "Container shop does not exist."
+              Write-Host "Container does not exist."
               exit 0
           }
 
-      # --------------------------------------------------
+      # ----------------------------------------
       # 6. اجرای Container جدید
-      # --------------------------------------------------
+      # ----------------------------------------
       - name: Run new container
         shell: powershell
         run: |
@@ -94,9 +90,9 @@ jobs:
             -p 8000:8000 `
             shop-api:1.0
 
-      # --------------------------------------------------
-      # 7. بررسی Container
-      # --------------------------------------------------
+      # ----------------------------------------
+      # 7. بررسی
+      # ----------------------------------------
       - name: Verify deployment
         shell: powershell
         run: |
@@ -105,5 +101,4 @@ jobs:
 
           docker ps
 
-          Write-Host "Container logs:"
           docker logs shop
