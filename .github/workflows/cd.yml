@@ -32,10 +32,10 @@ jobs:
         shell: powershell
         run: |
           Write-Host "===== Docker Version ====="
-          docker --version
+          & "C:\Users\Mehrdad\AppData\Local\Programs\DockerDesktop\resources\bin\docker.exe"  --version
 
           Write-Host "===== Docker Info ====="
-          docker info
+          & "C:\Users\Mehrdad\AppData\Local\Programs\DockerDesktop\resources\bin\docker.exe"  info
 
       # 4. ساخت Image آزمایشی
       - name: Build Docker image
