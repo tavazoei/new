@@ -1,94 +1,109 @@
 name: CD
 
 on:
-  workflow_run:
-    workflows: ["Testi"]
-    types:
-      - completed
+  push:
+    branches:
+      - main
 
 jobs:
   deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-
+    # این Job روی کامپیوتر خودت اجرا می‌شود
     runs-on: self-hosted
 
     steps:
-      # 1. دریافت کد
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # 2. بروزرسانی پوشه Deploy
+      # --------------------------------------------------
+      # 1. دریافت/بروزرسانی کد
+      # --------------------------------------------------
       - name: Update deployment folder
         shell: powershell
         run: |
+
+          # رفتن به پوشه‌ای که Production از آن Deploy می‌شود
           cd C:\Users\Mehrdad\Desktop\new
 
+          # دریافت آخرین اطلاعات از GitHub
           git fetch origin
+
+          # قرار دادن پوشه دقیقاً روی آخرین commit شاخه main
           git reset --hard origin/main
 
-      # 3. ساخت Virtual Environment در صورت نیاز
-      - name: Create virtual environment
+      # --------------------------------------------------
+      # 2. نمایش اطلاعات برای Debug
+      # --------------------------------------------------
+      - name: Show deployment information
         shell: powershell
         run: |
+
+          Write-Host "Machine:"
+          hostname
+
+          Write-Host "Current directory:"
+          Get-Location
+
+          Write-Host "Git commit:"
+          git rev-parse --short HEAD
+
+      # --------------------------------------------------
+      # 3. ساخت Docker Image
+      # --------------------------------------------------
+      - name: Build Docker image
+        shell: powershell
+        run: |
+
           cd C:\Users\Mehrdad\Desktop\new
 
-          if (-not (Test-Path ".venv")) {
-              python -m venv .venv
+          docker build -t shop-api:1.0 .
+
+      # --------------------------------------------------
+      # 4. توقف Container قبلی
+      # --------------------------------------------------
+      - name: Stop old container
+        shell: powershell
+        run: |
+
+          docker stop shop
+
+          if ($LASTEXITCODE -ne 0) {
+              Write-Host "Container shop is not running."
+              exit 0
           }
 
-      # 4. نصب Dependencies
-      - name: Install dependencies
+      # --------------------------------------------------
+      # 5. حذف Container قبلی
+      # --------------------------------------------------
+      - name: Remove old container
         shell: powershell
         run: |
-          cd C:\Users\Mehrdad\Desktop\new
 
-          .\.venv\Scripts\python.exe -m pip install --upgrade pip
-          .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+          docker rm shop
 
-      # 5. خاموش کردن FastAPI قبلی
-      - name: Stop old FastAPI
-        shell: powershell
-        run: |
-          $connection = Get-NetTCPConnection `
-            -LocalPort 8000 `
-            -State Listen `
-            -ErrorAction SilentlyContinue
-
-          if ($connection) {
-              Write-Host "Stopping old FastAPI..."
-
-              Stop-Process `
-                -Id $connection.OwningProcess `
-                -Force
-          }
-          else {
-              Write-Host "No FastAPI is currently running."
+          if ($LASTEXITCODE -ne 0) {
+              Write-Host "Container shop does not exist."
+              exit 0
           }
 
-      # 6. اجرای FastAPI جدید
-      - name: Start FastAPI
+      # --------------------------------------------------
+      # 6. اجرای Container جدید
+      # --------------------------------------------------
+      - name: Run new container
         shell: powershell
         run: |
-          $deployPath = "C:\Users\Mehrdad\Desktop\new"
 
-          Start-Process `
-            -FilePath "$deployPath\.venv\Scripts\python.exe" `
-            -WorkingDirectory $deployPath `
-            -ArgumentList "-m","uvicorn","app.main:app","--host","127.0.0.1","--port","8000"
+          docker run -d `
+            --name shop `
+            -p 8000:8000 `
+            shop-api:1.0
 
-      # 7. بررسی سلامت برنامه
-      - name: Health check
+      # --------------------------------------------------
+      # 7. بررسی Container
+      # --------------------------------------------------
+      - name: Verify deployment
         shell: powershell
         run: |
+
           Start-Sleep -Seconds 5
 
-          $response = Invoke-WebRequest `
-            -Uri "http://127.0.0.1:8000/docs" `
-            -UseBasicParsing
+          docker ps
 
-          if ($response.StatusCode -eq 200) {
-              Write-Host "FastAPI is running successfully!"
-          }
-          else {
-              throw "FastAPI health check failed."
-          }
+          Write-Host "Container logs:"
+          docker logs shop
