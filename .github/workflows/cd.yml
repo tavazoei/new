@@ -7,98 +7,80 @@ on:
       - completed
 
 jobs:
-  deploy:
-    # فقط اگر CI با موفقیت تمام شده باشد
+  docker-test:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-
     runs-on: self-hosted
 
     steps:
-      # ----------------------------------------
-      # 1. بروزرسانی کد Production
-      # ----------------------------------------
-      - name: Update deployment folder
+      # 1. دریافت کد
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. بررسی Runner
+      - name: Check runner
         shell: powershell
         run: |
+          Write-Host "===== Runner Information ====="
+          Write-Host "Computer:"
+          hostname
 
-          cd C:\Users\Mehrdad\Desktop\new
+          Write-Host "User:"
+          whoami
 
-          git fetch origin
-
-          git reset --hard origin/main
-
-      # ----------------------------------------
-      # 2. نمایش Commit
-      # ----------------------------------------
-      - name: Show deployed commit
+      # 3. بررسی Docker
+      - name: Check Docker
         shell: powershell
         run: |
+          Write-Host "===== Docker Version ====="
+          docker --version
 
-          cd C:\Users\Mehrdad\Desktop\new
+          Write-Host "===== Docker Info ====="
+          docker info
 
-          Write-Host "Deploying commit:"
-          git rev-parse --short HEAD
-
-      # ----------------------------------------
-      # 3. ساخت Docker Image
-      # ----------------------------------------
+      # 4. ساخت Image آزمایشی
       - name: Build Docker image
         shell: powershell
         run: |
+          docker build -t github-actions-docker-test:1.0 .
 
-          cd C:\Users\Mehrdad\Desktop\new
-
-          docker build -t shop-api:1.0 .
-
-      # ----------------------------------------
-      # 4. توقف Container قبلی
-      # ----------------------------------------
-      - name: Stop old container
+      # 5. نمایش Image
+      - name: Show Docker image
         shell: powershell
         run: |
+          docker images github-actions-docker-test
 
-          docker stop shop
-
-          if ($LASTEXITCODE -ne 0) {
-              Write-Host "Container is not running."
-              exit 0
-          }
-
-      # ----------------------------------------
-      # 5. حذف Container قبلی
-      # ----------------------------------------
-      - name: Remove old container
+      # 6. اجرای Container
+      - name: Run Docker container
         shell: powershell
         run: |
-
-          docker rm shop
-
-          if ($LASTEXITCODE -ne 0) {
-              Write-Host "Container does not exist."
-              exit 0
-          }
-
-      # ----------------------------------------
-      # 6. اجرای Container جدید
-      # ----------------------------------------
-      - name: Run new container
-        shell: powershell
-        run: |
-
           docker run -d `
-            --name shop `
-            -p 8000:8000 `
-            shop-api:1.0
+            --name github-actions-docker-test `
+            github-actions-docker-test:1.0
 
-      # ----------------------------------------
-      # 7. بررسی
-      # ----------------------------------------
-      - name: Verify deployment
+      # 7. بررسی Container
+      - name: Check container
         shell: powershell
         run: |
-
-          Start-Sleep -Seconds 5
-
           docker ps
+          docker logs github-actions-docker-test
 
-          docker logs shop
+      # 8. تست Container
+      - name: Test container
+        shell: powershell
+        run: |
+          docker exec github-actions-docker-test echo "Docker container works!"
+
+      # 9. حذف Container
+      - name: Remove test container
+        if: always()
+        shell: powershell
+        run: |
+          docker rm -f github-actions-docker-test
+
+      # 10. پایان
+      - name: Docker test completed
+        shell: powershell
+        run: |
+          Write-Host "================================="
+          Write-Host "Docker test completed successfully"
+          Write-Host "================================="
