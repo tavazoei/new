@@ -58,8 +58,8 @@ jobs:
         shell: powershell
         run: |
           docker run -d `
-            --name github-actions-docker-test `
-            github-actions-docker-test:1.0
+            -p 8000:8000 --name github-actions-docker-test `
+             github-actions-docker-test:1.0
 
       # 7. بررسی Container
       - name: Check container
@@ -81,18 +81,18 @@ jobs:
             github-actions-docker-test `
             echo "Docker container works!"
 
-      # 9. حذف Container
-      - name: Remove test container
-        if: always()
-        shell: powershell
-        continue-on-error: true
-        run: |
-          docker rm -f github-actions-docker-test
+      # # 9. حذف Container
+      # - name: Remove test container
+      #   if: always()
+      #   shell: powershell
+      #   continue-on-error: true
+      #   run: |
+      #     docker rm -f github-actions-docker-test
 
-      # 10. پایان
-      - name: Docker test completed
-        shell: powershell
-        run: |
-          Write-Host "================================="
-          Write-Host "Docker test completed successfully"
-          Write-Host "================================="
+      # # 10. پایان
+      # - name: Docker test completed
+      #   shell: powershell
+      #   run: |
+      #     Write-Host "================================="
+      #     Write-Host "Docker test completed successfully"
+      #     Write-Host "================================="
