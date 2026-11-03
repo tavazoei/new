@@ -34,30 +34,30 @@ jobs:
         run: |
           Write-Host "===== Docker Version ====="
 
-          & "C:\Program Files\Docker\Docker\resources\bin\docker.exe" --version
+          docker --version
 
           Write-Host "===== Docker Info ====="
 
-          & "C:\Program Files\Docker\Docker\resources\bin\docker.exe" info
+          docker info
 
       # 4. ساخت Image آزمایشی
       - name: Build Docker image
         shell: powershell
         run: |
-          & "C:\Program Files\Docker\Docker\resources\bin\docker.exe" build `
-            -t github-actions-docker-test:1.0 .
+          docker build `
+          -t github-actions-docker-test:1.0 .
 
       # 5. نمایش Image
       - name: Show Docker image
         shell: powershell
         run: |
-          & "C:\Program Files\Docker\Docker\resources\bin\docker.exe" images github-actions-docker-test
+          docker images github-actions-docker-test
 
       # 6. اجرای Container
       - name: Run Docker container
         shell: powershell
         run: |
-          & "C:\Program Files\Docker\Docker\resources\bin\docker.exe" run -d `
+          docker run -d `
             --name github-actions-docker-test `
             github-actions-docker-test:1.0
 
@@ -67,17 +67,17 @@ jobs:
         run: |
           Write-Host "===== Running Containers ====="
 
-          & "C:\Program Files\Docker\Docker\resources\bin\docker.exe" ps
+          docker ps
 
           Write-Host "===== Container Logs ====="
 
-          & "C:\Program Files\Docker\Docker\resources\bin\docker.exe" logs github-actions-docker-test
+          docker logs github-actions-docker-test
 
       # 8. تست Container
       - name: Test container
         shell: powershell
         run: |
-          & "C:\Program Files\Docker\Docker\resources\bin\docker.exe" exec `
+          docker exec `
             github-actions-docker-test `
             echo "Docker container works!"
 
@@ -87,7 +87,7 @@ jobs:
         shell: powershell
         continue-on-error: true
         run: |
-          & "C:\Program Files\Docker\Docker\resources\bin\docker.exe" rm -f github-actions-docker-test
+          docker rm -f github-actions-docker-test
 
       # 10. پایان
       - name: Docker test completed
