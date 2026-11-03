@@ -32,7 +32,7 @@ jobs:
       - name: Check Docker
         shell: powershell
         run: |
-          Write-Host "===== Docker Version ====="
+          Write-Host "===== Docker Version ===="
 
           docker --version
 
