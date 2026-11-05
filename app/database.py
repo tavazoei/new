@@ -1,22 +1,20 @@
-import os
-
-from dotenv import load_dotenv
+from app.config import settings
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-load_dotenv()
+# load_dotenv()
 
 
 class Base(DeclarativeBase):
     pass
 
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DB_RL = settings.DATABASE_URL.get_secret_value()
 
 
-if DATABASE_URL:
+if DB_RL:
 
-    engine = create_engine(DATABASE_URL)
+    engine = create_engine(DB_RL)
 
     SessionLocal = sessionmaker(
         bind=engine,

@@ -1,11 +1,12 @@
 from fastapi import Depends, FastAPI
 from sqlalchemy.orm import Session
-
+from app.auth import router as auth_router
 from app.database import get_db
 from app.models import Product
 from app.schemas import ProductCreate, ProductResponse
 
 app = FastAPI()
+app.include_router(auth_router)
 
 
 @app.get("/")
